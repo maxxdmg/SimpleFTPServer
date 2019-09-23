@@ -30,22 +30,21 @@ def main():
         readcmd(cmd, sock)
 
 def readcmd(rcmd, sock):
-    cmd = rcmd.upper()
+    cmd = rcmd #.upper()
 
-    if cmd[0:5] == 'QUIT':
+    if cmd[0:5] == 'QUIT' or cmd[0:5] == 'quit':
         sock.sendall(cmd.encode("UTF-8")) #send quit to server
         time.sleep(1) #added because close operation timing issues
         sock.close() #close socket
         sys.exit() #exit 
             
-    if cmd[0:8] == 'RETRIEVE':
+    if cmd[0:8] == 'RETRIEVE' or cmd[0:8] == 'retrieve':
         rfile = cmd[9:] #parse file name
         sock.sendall(cmd.encode("UTF-8"))
         data = sock.recv(1024)
         f = open(rfile, "w")
         f.write(data.decode())
         f.flush()
-
         while True:
             data = sock.recv(1024)
             if not data: break

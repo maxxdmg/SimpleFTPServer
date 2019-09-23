@@ -59,16 +59,11 @@ def clientthread(conn):
 			break;
 		print(reply)
 	#Retrieve function
-		if rdata[0:8] == 'RETRIEVE':
+		if rdata[0:8] == 'RETRIEVE' or rdata[0:8] == 'retrieve':
 			rfile = rdata[9:] #parse file name
 			print(rfile) #confirms file name
-			#try to open requested file error if not found
-			try:
-				file = open(rfile, 'rb') #open file to read bytes
-			except:
-				print("File Not Found.")
-				traceback.print_exc()
-				
+
+			file = open(rfile, 'rb') #open file to read bytes
 			s = file.read(1024)
 			
 			while(s):
@@ -78,8 +73,7 @@ def clientthread(conn):
 			file.close() #close file after sending all
 
 			print(rfile + " sent") #print file name that's sent
-    #End RETRIEVE function
-
+	# End RETRIEVE function
 	#conn.close() #
 
 while 1:
