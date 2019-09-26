@@ -12,15 +12,15 @@ import time
 import os
 
 def main():
-    #setup socket
+    #Create TCP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    host = "127.0.0.1"
-    port = 8000
-    try:
-       sock.connect((host, port))
-    except:
-       print("Connection Error")
-       sys.exit()
+    #host = "127.0.0.1"
+    #port = 8000
+    #try:
+    #   sock.connect((host, port))
+    #except:
+    #   print("Connection Error")
+    #   sys.exit()
 
     while True:
         print("Enter your command: QUIT to exit")
@@ -56,9 +56,24 @@ def readcmd(rcmd, sock):
             if len(data) < 1024:
                 f.close()
                 break
-
         f.close()
         print('Successfully received the file')
+
+    if cmd[0:10] == 'CONNECTION':
+        cmdlist = cmd.split(" ", 3)
+        ip = cmdlist[1]
+        port = cmdlist[2]
+
+        try:
+            sock.connect((ip, int(port)))
+        except:
+            print("Connection Error")
+            sys.exit()
+        finally:
+            print("Connection established\n")
+
+        #f.close()
+        #print('Successfully received the file')
 
     return
 
