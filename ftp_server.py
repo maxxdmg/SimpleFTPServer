@@ -66,8 +66,26 @@ def main():
 				print("ignoring socket error")
 				continue
 			if c: break; # after every connection, reset ready so that the process can be killed
-
 	s.close() #Close socket
+
+def retrieve(filename):
+	print(filename)
+	
+	try:
+		file = open(filename, 'rb') #open file to read bytes
+		s = file.read(1024)
+	except:
+		print("error opening file")
+		return
+
+	while(s):
+		conn.send(s) #send initial read
+		print('Sent ', repr(s)) #confirm data print to screen
+		s = file.read(1024) #continue to read
+	file.close() #close file after sending all
+
+	print(filename + " sent") #print file name that's sent
+
 
 #Function to handle all client connections and their respective commands
 def clientthread(conn):
@@ -75,24 +93,17 @@ def clientthread(conn):
 		data = conn.recv(1024)
 		reply = "ACK " + data.decode()
 		rdata = data.decode()
+		rdata = rdata.lower()
 		if not data:
 			break;
 		print(reply)
+
 		#Retrieve function
-		if rdata[0:8] == 'RETRIEVE' or rdata[0:8] == 'retrieve':
+		if 'retrieve' in rdata:
 			rfile = rdata[9:] #parse file name
 			print(rfile) #confirms file name
+			retrieve(rfile)
 
-			file = open(rfile, 'rb') #open file to read bytes
-			s = file.read(1024)
-			
-			while(s):
-				conn.send(s) #send initial read
-				print('Sent ', repr(s)) #confirm data print to screen
-				s = file.read(1024) #continue to read
-			file.close() #close file after sending all
-
-			print(rfile + " sent") #print file name that's sent
 	# End RETRIEVE function
 	#conn.close() #
 
