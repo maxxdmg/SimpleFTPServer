@@ -27,32 +27,50 @@ import sys
 import select
 from _thread import *
 
-#Host and port needs to be the same for ftp_client
-host = '127.0.0.1'
-port = 8000
+# intialize and run everything
+def main():
+	#Host and port needs to be the same for ftp_client
+	host = '127.0.0.1'
+	port = 8000
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #create socket
+	print("Socket Created") #Status update
 
-#create socket
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-print("Socket Created") #Status update
-
-#Attempt to bind socket to IP and port, error otherwise.
-try:
-	s.bind((host, port))
-except socket.error:
-	print("Binding failed");
-	sys.exit();
+	#Attempt to bind socket to IP and port, error otherwise.
+	try:
+		s.bind((host, port))
+	except socket.error:
+		print("Binding failed");
+		sys.exit();	
+	print("socket bound") # Status update
 	
-print("socket bound") # Status update
+	s.setblocking(0) # for exiting server on windows
+	s.listen();
+	print("listening") #Status update
 
-s.setblocking(0) # for exiting server on windows
-s.listen();
+	# driver loop
+	while 1:
+		# see if kill process occured
+		try:
+			ready = select.select((s,), (), (), 0.5) # handle windows kill command, ctrl+c
+		except KeyboardInterrupt:
+			print("Keyboard interrupt occured, closing...") # kill process message
+			break;
 
-print("listening") #Status update
+		# no process kill occurred
+		if (ready[0]):
+			try:
+				conn, addr = s.accept() #continuously accept client connections
+				print("Connected with " + addr[0] + ":" + str(addr[1])) #Print IP address and port# of connected client
+				start_new_thread(clientthread, (conn,)) #Start new thread for client each connection
+			except socket.error:
+				print("ignoring socket error")
+				continue
+			if c: break; # after every connection, reset ready so that the process can be killed
+
+	s.close() #Close socket
 
 #Function to handle all client connections and their respective commands
 def clientthread(conn):
-
 	while True:
 		data = conn.recv(1024)
 		reply = "ACK " + data.decode()
@@ -78,27 +96,5 @@ def clientthread(conn):
 	# End RETRIEVE function
 	#conn.close() #
 
-while 1:
-	try:
-		ready = select.select((s,), (), (), 0.5) # handle windows kill command, ctrl+c
-	except KeyboardInterrupt:
-		print("Keyboard interrupt occured, closing...")
-		break;
-
-	# no process kill occurred
-	if (ready[0]):
-		try:
-			conn, addr = s.accept() #continuously accept client connections
-
-		    #Print IP address and port# of connected client
-			print("Connected with " + addr[0] + ":" + str(addr[1]))
-
-		    #Start new thread for client each connection
-			start_new_thread(clientthread, (conn,))
-		except socket.error:
-			print("ignoring socket error")
-			continue
-		if c: break; # after every connection, reset ready so that the process can be killed
-
-#Close socket
-s.close()
+# run
+main()
