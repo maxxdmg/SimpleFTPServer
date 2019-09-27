@@ -24,6 +24,7 @@
 import socket
 import os
 import sys
+import select
 from _thread import *
 
 #Host and port needs to be the same for ftp_client
@@ -44,6 +45,7 @@ except socket.error:
 	
 print("socket bound") # Status update
 
+s.setblocking(0) # for exiting server on windows
 s.listen();
 
 print("listening") #Status update
@@ -58,7 +60,7 @@ def clientthread(conn):
 		if not data:
 			break;
 		print(reply)
-	#Retrieve function
+		#Retrieve function
 		if rdata[0:8] == 'RETRIEVE' or rdata[0:8] == 'retrieve':
 			rfile = rdata[9:] #parse file name
 			print(rfile) #confirms file name
@@ -77,13 +79,26 @@ def clientthread(conn):
 	#conn.close() #
 
 while 1:
-	conn, addr = s.accept() #continuously accept client connections
+	try:
+		ready = select.select((s,), (), (), 0.5) # handle windows kill command, ctrl+c
+	except KeyboardInterrupt:
+		print("Keyboard interrupt occured, closing...")
+		break;
 
-    #Print IP address and port# of connected client
-	print("Connected with " + addr[0] + ":" + str(addr[1]))
+	# no process kill occurred
+	if (ready[0]):
+		try:
+			conn, addr = s.accept() #continuously accept client connections
 
-    #Start new thread for client each connection
-	start_new_thread(clientthread, (conn,))
+		    #Print IP address and port# of connected client
+			print("Connected with " + addr[0] + ":" + str(addr[1]))
+
+		    #Start new thread for client each connection
+			start_new_thread(clientthread, (conn,))
+		except socket.error:
+			print("ignoring socket error")
+			continue
+		if c: break; # after every connection, reset ready so that the process can be killed
 
 #Close socket
 s.close()
