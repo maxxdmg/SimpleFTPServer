@@ -30,16 +30,13 @@ from _thread import *
 # intialize and run everything
 
 
-def main():
-    # Host and port needs to be the same for ftp_client
-    host = '127.0.0.1'
-    port = 8000
+def main(host, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # create socket
     print("Socket Created")  # Status update
 
     # Attempt to bind socket to IP and port, error otherwise.
     try:
-        s.bind((host, port))
+        s.bind((host, int(port)))
     except socket.error:
         print("Binding failed")
         sys.exit()
@@ -71,7 +68,8 @@ def main():
             except socket.error:
                 print("ignoring socket error")
                 continue
-            if c:
+            if conn:
+                s.close()
                 break  # after every connection, reset ready so that the process can be killed
     s.close()  # Close socket
 
@@ -126,5 +124,14 @@ def clientthread(conn):
 
 
     #conn.close() #
-# run
-main()
+
+
+if len(sys.argv) != 3:
+    print("Usage: python3 ftp_server.py ip_address port")
+    exit()
+else:
+    # get host and port from cmd line args
+    host = sys.argv[1]
+    port = sys.argv[2]
+
+    main(host, port) # run main w/ supplied values

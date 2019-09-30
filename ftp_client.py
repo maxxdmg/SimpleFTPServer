@@ -11,16 +11,16 @@ import sys
 import time
 import os
 
-def main():
-    #Create TCP socket
+def main(host, port):
+    # create TCP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #host = "127.0.0.1"
-    #port = 8000
-    #try:
-    #   sock.connect((host, port))
-    #except:
-    #   print("Connection Error")
-    #   sys.exit()
+
+    # connect to server
+    try:
+        sock.connect((host, int(port)))
+    except:
+        print("Connection Error")
+        sys.exit()
 
     while True:
         print("Enter your command: HELP to see options or QUIT to exit")
@@ -72,24 +72,15 @@ def readcmd(rcmd, sock):
     if 'retreieve' in cmd:
         handle_retrieve() 
 
-    # handle connection
-    if 'connection' in cmd:
-        cmdlist = cmd.split(" ", 3)
-        ip = cmdlist[1]
-        port = cmdlist[2]
-
-        try:
-            sock.connect((ip, int(port)))
-        except:
-            print("Connection Error")
-            sys.exit()
-        finally:
-            print("Connection established\n")
-
-        #f.close()
-        #print('Successfully received the file')
-
     return
 
 if __name__ == "__main__":
-   main()
+    if len(sys.argv) != 3:
+        print("Usage: python3 ftp_client.py ip_address port")
+        exit()
+    else:
+    # get host and port from cmd line args
+        host = sys.argv[1]
+        port = sys.argv[2]
+
+        main(host, port) # run main w/ supplied values
