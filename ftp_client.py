@@ -27,29 +27,30 @@ def main(host, port):
         cmd = input() #command to go to the server
         readcmd(cmd, sock) #process commands
 
-def handle_quit():
+def handle_quit(sock, cmd):
         sock.sendall(cmd.encode("UTF-8")) #send quit to server
         time.sleep(1) #added because close operation timing issues
         sock.close() #close socket
         sys.exit() #exit 
 
-def handle_retrieve():
+def handle_retrieve(sock, cmd):
     rfile = cmd[9:] #parse file name
     sock.sendall(cmd.encode("UTF-8"))
     data = sock.recv(1024)
-    f = open(rfile, "w")
+    try:
+        f = open(rfile, "w")
+    except:
+        print("error opening file")
+        return 0
     f.write(data.decode())
     f.flush()
     while True:
         data = sock.recv(1024)
-        if not data: break
-        print('data=%s', (data))
         f.write(data.decode())
         f.flush()
 
         #if less than 1024 nothing more to receive
         if len(data) < 1024:
-            f.close()
             break
     f.close()
     print('Successfully received the file')
@@ -66,11 +67,19 @@ def readcmd(rcmd, sock):
 
     # handle quit
     if 'quit' in cmd:
-        handle_quit()
+        handle_quit(sock, cmd)
     
     # handle retrieve
-    if 'retreieve' in cmd:
-        handle_retrieve() 
+    if 'retrieve' in cmd:
+        handle_retrieve(sock, cmd) 
+
+    # handle list
+    if 'list' in cmd:
+        while True:
+            data = sock.recv(1024)
+            print(data)
+            if len(data) < 1024:
+                break
 
     return
 

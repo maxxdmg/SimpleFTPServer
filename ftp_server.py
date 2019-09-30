@@ -48,53 +48,35 @@ def main(host, port):
 
     # driver loop
     while 1:
-        # see if kill process occured
         try:
-            # handle windows kill command, ctrl+c
-            ready = select.select((s,), (), (), 0.5)
-        except KeyboardInterrupt:
-            # kill process message
-            print("Keyboard interrupt occured, closing...")
-            break
-
-        # no process kill occurred
-        if (ready[0]):
-            try:
-                conn, addr = s.accept()  # continuously accept client connections
-                # Print IP address and port# of connected client
-                print("Connected with " + addr[0] + ":" + str(addr[1]))
-                # Start new thread for client each connection
-                start_new_thread(clientthread, (conn,))
-            except socket.error:
-                print("ignoring socket error")
-                continue
-            if conn:
-                s.close()
-                break  # after every connection, reset ready so that the process can be killed
+            conn, addr = s.accept()  # continuously accept client connections
+            # Print IP address and port# of connected client
+            print("Connected with " + addr[0] + ":" + str(addr[1]))
+            # Start new thread for client each connection
+            start_new_thread(clientthread, (conn, s))
+        except socket.error:
+            continue
     s.close()  # Close socket
 
 
-def retrieve(filename):
-    print(filename)
-
+def retrieve(file, conn):
     try:
-        file = open(filename, 'rb')  # open file to read bytes
-        s = file.read(1024)
+        f = open(file, 'rb')  # open file to read bytes
     except:
         print("error opening file")
-        return
+        return 0
 
+    s = f.read(1024)
     while(s):
         conn.send(s)  # send initial read
         print('Sent ', repr(s))  # confirm data print to screen
-        s = file.read(1024)  # continue to read
+        s = f.read(1024)  # continue to read
     file.close()  # close file after sending all
-
-    print(filename + " sent")  # print file name that's sent
+    return 1
 
 
 # Function to handle all client connections and their respective commands
-def clientthread(conn):
+def clientthread(conn, socket):
     while True:
         data = conn.recv(1024)
         reply = "ACK " + data.decode()
@@ -104,17 +86,18 @@ def clientthread(conn):
             break
         print(reply)
 
-        # Retrieve function
-        if 'retrieve' in rdata:
-            rfile = rdata[9:]  # parse file name
-            print(rfile)  # confirms file name
-            retrieve(rfile)
+    # Retrieve function
+    if 'retrieve' in rdata:
+        rfile = rdata[9:]  # parse file name
+        print(rfile)  # confirms file name
+        retrieve(rfile, conn)
 
     # List function
     if rdata[0:4] == 'LIST' or rdata[0:4] == 'list':
         files = [f for f in os.listdir('.') if os.path.isfile(f)]
         for f in files:
-            print(f)
+            conn.send(bytes(f))
+            print(bytes(f))
     # end LIST function
 
     # QUIT function
