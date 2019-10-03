@@ -36,21 +36,26 @@ def handle_quit(sock, cmd):
 def handle_retrieve(sock, cmd):
     rfile = cmd[9:] #parse file name
     sock.sendall(cmd.encode("UTF-8"))
-    data = sock.recv(1024)
     try:
         f = open(rfile, "w")
     except:
         print("error opening file")
         return 0
-    f.write(data.decode())
-    f.flush()
+
     while True:
-        data = sock.recv(1024)
+        data = sock.recv(128)
+
+        # handle empty file
+        if data.decode() == "$nil$":
+            break
+
+        print(data)
+
         f.write(data.decode())
         f.flush()
 
         #if less than 1024 nothing more to receive
-        if len(data) < 1024:
+        if len(data) < 128:
             break
     f.close()
     print('Successfully received the file')
@@ -75,11 +80,8 @@ def readcmd(rcmd, sock):
 
     # handle list
     if 'list' in cmd:
-        while True:
-            data = sock.recv(1024)
-            print(data)
-            if len(data) < 1024:
-                break
+        data = sock.recv(1024)
+        print(data)
 
     return
 

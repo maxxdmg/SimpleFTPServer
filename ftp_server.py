@@ -42,7 +42,6 @@ def main(host, port):
         sys.exit()
     print("socket bound")  # Status update
 
-    s.setblocking(0)  # for exiting server on windows
     s.listen()
     print("listening")  # Status update
 
@@ -56,22 +55,41 @@ def main(host, port):
             start_new_thread(clientthread, (conn, s))
         except socket.error:
             continue
+        except KeyboardInterrupt:
+            print("\nQuiting server...")
+            break
     s.close()  # Close socket
 
 
 def retrieve(file, conn):
-    try:
-        f = open(file, 'rb')  # open file to read bytes
-    except:
-        print("error opening file")
-        return 0
+    filesize = 0;
+    sizeread = 0;
 
-    s = f.read(1024)
-    while(s):
-        conn.send(s)  # send initial read
-        print('Sent ', repr(s))  # confirm data print to screen
+    f = open(file, 'rb')  # open file to read bytes
+    filesize = os.path.getsize(f.name)
+    print(os.listdir())
+
+    if int(filesize) == 0:
+        conn.send(b'$nil$');
+        f.close();
+        return;       
+    elif int(filesize) <= 1024:
+        s = f.read(filesize);
+        conn.send(s);
+        f.close();
+        print('Sent ' + file + '\n')  # confirm data print to screen
+        return;
+
+
+    while(sizeread < 1024):
         s = f.read(1024)  # continue to read
-    file.close()  # close file after sending all
+        sizeread += 1024;
+        conn.send(s)  # send initial read
+        print('Sending ' + file + '\n')  # confirm data print to screen
+        if filesize - sizeread < 1024:
+            conn.send(f.read(filesize - sizeread))
+            break;
+    f.close()  # close file after sending all
     return 1
 
 
@@ -86,27 +104,29 @@ def clientthread(conn, socket):
             break
         print(reply)
 
-    # Retrieve function
-    if 'retrieve' in rdata:
-        rfile = rdata[9:]  # parse file name
-        print(rfile)  # confirms file name
-        retrieve(rfile, conn)
+        # Retrieve function
+        if 'retrieve' in rdata:
+            rfile = rdata[9:]  # parse file name
+            print(rfile)  # confirms file name
+            retrieve(rfile, conn)
 
-    # List function
-    if rdata[0:4] == 'LIST' or rdata[0:4] == 'list':
-        files = [f for f in os.listdir('.') if os.path.isfile(f)]
-        for f in files:
-            conn.send(bytes(f))
-            print(bytes(f))
-    # end LIST function
+        # List function
+        if rdata[0:4] == 'LIST' or rdata[0:4] == 'list':
+            connect.send('hello ! hows it goin from server')
+            files = [f for f in os.listdir('.') if os.path.isfile(f)]
+            for f in files:
+                conn.send(bytes(f))
+                print(bytes(f))
+        # end LIST function
 
-    # QUIT function
-    if rdata[0:4] == 'QUIT' or rdata[0:4] == 'quit':
-        conn.close()
-    # End RETRIEVE function
+        # QUIT function
+        if rdata[0:4] == 'QUIT' or rdata[0:4] == 'quit':
+            conn.close()
+            break
+        # End RETRIEVE function
 
 
-    #conn.close() #
+        #conn.close() #
 
 
 if len(sys.argv) != 3:
