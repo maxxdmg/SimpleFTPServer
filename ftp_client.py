@@ -32,7 +32,7 @@ def handle_quit(sock, cmd):
         time.sleep(1) #added because close operation timing issues
         sock.close() #close socket
         sys.exit() #exit 
-
+'''
 def handle_retrieve(sock, cmd):
     rfile = cmd[9:] #parse file name
     sock.sendall(cmd.encode("UTF-8"))
@@ -59,6 +59,40 @@ def handle_retrieve(sock, cmd):
             break
     f.close()
     print('Successfully received the file')
+'''
+
+def handle_retrieve(sock, cmd):
+    chunk_size = 1024 #arbitrary chunk size but needs to be sufficient for data transfers
+    rfile = cmd[9:] #parse file name
+    sock.sendall(cmd.encode('UTF-8')) #send file request to server
+    filesize = sock.recv(16) #represents the size of file requested
+
+    print('File size received is: ', filesize.decode())
+    f = open('copy2-' + rfile, 'w') #Added to use file in same dir then run diff
+
+    if filesize <= bytes(chunk_size):
+        data = sock.recv(chunk_size)
+        f.write(data.decode())
+        f.flush()
+        f.close()
+        return
+
+    while True:
+        data = sock.recv(chunk_size)
+        if not data: break
+        print('data=%s', (data.decode()))
+        f.write(data.decode())
+        f.flush()
+
+        #Indicates last of data was received
+        if len(data) < chunk_size:
+            f.close()
+            break
+
+    f.close()
+    print('Successfully received the file')
+
+
 
 def handle_help():
     print("QUIT: to quit\nRETRIEVE: to retrieve files\n")

@@ -22,6 +22,7 @@
 
 
 import socket
+import time
 import os
 import sys
 import select
@@ -52,7 +53,7 @@ def main(host, port):
             # Print IP address and port# of connected client
             print("Connected with " + addr[0] + ":" + str(addr[1]))
             # Start new thread for client each connection
-            start_new_thread(clientthread, (conn, s))
+            start_new_thread(clientthread, (conn, )) #,s
         except socket.error:
             continue
         except KeyboardInterrupt:
@@ -60,7 +61,7 @@ def main(host, port):
             break
     s.close()  # Close socket
 
-
+'''
 def retrieve(file, conn):
     filesize = 0;
     sizeread = 0;
@@ -91,10 +92,45 @@ def retrieve(file, conn):
             break;
     f.close()  # close file after sending all
     return 1
+'''
+def retrieve(file, conn):
+    #Size of data to send
+    chunk_size = 1024
+    #try to open the file
+    try:
+        rfile = open(file, 'rb') #open file passed
+
+    except:
+        print("File Not Found")
+
+    #Get file size and send it to the client
+    filesize = os.path.getsize(file)
+    print('File size is: ', filesize)
+    conn.send(bytes(str(filesize).encode()))
+    time.sleep(1) #Added for thread timing
+
+    #If file size is less than or equal to chunk_size we have all the data
+    if int(filesize) <= chunk_size:
+        s = rfile.read(chunk_size)
+        conn.send(s)
+        rfile.close()
+        print('Successfully sent file')
+        return
+
+    #File is larger than chunk_size
+    s = rfile.read(chunk_size)
+
+    #While there is data to read in the file
+    while s:
+        conn.send(s) #send initial read
+        print(s.decode()) #confirm data print to screen
+        s = rfile.read(chunk_size) #continue to read
+    rfile.close()
+    print('Successfully sent file')
 
 
 # Function to handle all client connections and their respective commands
-def clientthread(conn, socket):
+def clientthread(conn): #socket
     while True:
         data = conn.recv(1024)
         reply = "ACK " + data.decode()
@@ -112,7 +148,7 @@ def clientthread(conn, socket):
 
         # List function
         if rdata[0:4] == 'LIST' or rdata[0:4] == 'list':
-            connect.send('hello ! hows it goin from server')
+            conn.send('hello ! hows it goin from server')
             files = [f for f in os.listdir('.') if os.path.isfile(f)]
             for f in files:
                 conn.send(bytes(f))
