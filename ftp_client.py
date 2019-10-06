@@ -114,6 +114,7 @@ def readcmd(rcmd, sock):
 
     # handle list
     if 'list' in cmd:
+        sock.sendall(cmd.encode("UTF-8"))
         data = sock.recv(1024)
         print(data)
 

@@ -148,11 +148,13 @@ def clientthread(conn): #socket
 
         # List function
         if rdata[0:4] == 'LIST' or rdata[0:4] == 'list':
-            conn.send('hello ! hows it goin from server')
-            files = [f for f in os.listdir('.') if os.path.isfile(f)]
-            for f in files:
-                conn.send(bytes(f))
-                print(bytes(f))
+            results = os.popen('ls').read().encode() #socket sends bytes needs to be encoded
+            while (results):
+                conn.send(results)  # send initial read
+                print(results.decode())  # confirm data print to screen
+                if len(results) < 1024:
+                    break
+
         # end LIST function
 
         # QUIT function
