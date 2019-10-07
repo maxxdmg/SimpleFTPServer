@@ -10,6 +10,8 @@ import socket
 import sys
 import time
 import os
+from pathlib import Path
+
 
 def main(host, port):
     # create TCP socket
@@ -61,6 +63,47 @@ def handle_retrieve(sock, cmd):
     print('Successfully received the file')
 '''
 
+def handle_store(sock, cmd):
+
+    #print(file)
+    #print(cmd)
+    file = cmd[6: ]
+
+    #Size of data to send
+    chunk_size = 1024
+    #try to open the file
+    try:
+        rfile = open(file, 'rb') #open file passed
+    
+    except:
+        print("File Not Found")
+
+    #Get file size and send it to the server
+    filesize = os.path.getsize(rfile.name)
+    print('File size is: ', filesize)
+    sock.send(bytes(str(filesize).encode()))
+    time.sleep(1) #Added for thread timing
+
+    #If file size is less than or equal to chunk_size we have all the data
+    if int(filesize) <= chunk_size:
+        s = rfile.read(chunk_size)
+        sock.send(s)
+        rfile.close()
+        print('Successfully sent file')
+        return
+    
+    #File is larger than chunk_size
+    s = rfile.read(chunk_size)
+    
+    #While there is data to read in the file
+    while s:
+        sock.send(s) #send initial read
+        print(s.decode()) #confirm data print to screen
+        s = rfile.read(chunk_size) #continue to read
+    rfile.close()
+    print('Successfully sent file from client')
+
+
 def handle_retrieve(sock, cmd):
     chunk_size = 1024 #arbitrary chunk size but needs to be sufficient for data transfers
     rfile = cmd[9:] #parse file name
@@ -110,7 +153,10 @@ def readcmd(rcmd, sock):
     
     # handle retrieve
     if 'retrieve' in cmd:
-        handle_retrieve(sock, cmd) 
+        handle_retrieve(sock, cmd)
+
+    if 'store' in cmd:
+        handle_store(sock, cmd)
 
     # handle list
     if 'list' in cmd:

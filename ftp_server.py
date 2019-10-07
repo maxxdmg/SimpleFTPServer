@@ -93,6 +93,40 @@ def retrieve(file, conn):
     f.close()  # close file after sending all
     return 1
 '''
+def store(file, conn):
+    chunk_size = 1024 #arbitrary chunk size but needs to be sufficient for data transfers
+    print(file)
+    '''
+    rfile = file #parse file name
+    file.sendall(.encode('UTF-8')) #send file request to client
+    filesize = file.recv(16) #represents the size of file requested
+    
+    print('File size received is: ', filesize.decode())
+    f = open('copy2-' + rfile, 'w') #Added to use file in same dir then run diff
+    
+    if filesize <= bytes(chunk_size):
+        data = file.recv(chunk_size)
+        f.write(data.decode())
+        f.flush()
+        f.close()
+        return
+
+    while True:
+        data = file.recv(chunk_size)
+        if not data: break
+        print('data=%s', (data.decode()))
+        f.write(data.decode())
+        f.flush()
+        
+        #Indicates last of data was received
+        if len(data) < chunk_size:
+            f.close()
+            break
+
+    f.close()
+    print('Successfully received the file')
+'''
+
 def retrieve(file, conn):
     #Size of data to send
     chunk_size = 1024
@@ -138,7 +172,7 @@ def clientthread(conn): #socket
         rdata = rdata.lower()
         if not data:
             break
-        print(reply)
+        #print(reply)
 
         # Retrieve function
         if 'retrieve' in rdata:
@@ -154,8 +188,12 @@ def clientthread(conn): #socket
                 print(results.decode())  # confirm data print to screen
                 if len(results) < 1024:
                     break
-
         # end LIST function
+        
+        #store function
+        if 'store' in rdata:
+            sfile = rdata[6: ] #find file name
+            printf("reading " + sfile)
 
         # QUIT function
         if rdata[0:4] == 'QUIT' or rdata[0:4] == 'quit':
