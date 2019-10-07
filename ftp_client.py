@@ -65,8 +65,7 @@ def handle_retrieve(sock, cmd):
 
 def handle_store(sock, cmd):
 
-    #print(file)
-    #print(cmd)
+    sock.sendall(cmd.encode("UTF-8")) #send store to server
     file = cmd[6: ]
 
     #Size of data to send

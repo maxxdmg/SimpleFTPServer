@@ -95,26 +95,23 @@ def retrieve(file, conn):
 '''
 def store(file, conn):
     chunk_size = 1024 #arbitrary chunk size but needs to be sufficient for data transfers
-    print(file)
-    '''
     rfile = file #parse file name
-    file.sendall(.encode('UTF-8')) #send file request to client
-    filesize = file.recv(16) #represents the size of file requested
+    filesize = conn.recv(16) #represents the size of file requested
     
     print('File size received is: ', filesize.decode())
-    f = open('copy2-' + rfile, 'w') #Added to use file in same dir then run diff
+    f = open('copy of' + rfile, 'w') #Added to use file in same dir then run diff
     
     if filesize <= bytes(chunk_size):
-        data = file.recv(chunk_size)
+        data = conn.recv(chunk_size)
         f.write(data.decode())
         f.flush()
         f.close()
         return
-
+    
     while True:
-        data = file.recv(chunk_size)
+        data = conn.recv(chunk_size)
         if not data: break
-        print('data=%s', (data.decode()))
+        #print('data=%s', (data.decode()))
         f.write(data.decode())
         f.flush()
         
@@ -125,7 +122,7 @@ def store(file, conn):
 
     f.close()
     print('Successfully received the file')
-'''
+
 
 def retrieve(file, conn):
     #Size of data to send
@@ -166,10 +163,12 @@ def retrieve(file, conn):
 # Function to handle all client connections and their respective commands
 def clientthread(conn): #socket
     while True:
+        #print(conn)
         data = conn.recv(1024)
         reply = "ACK " + data.decode()
         rdata = data.decode()
         rdata = rdata.lower()
+        #print(rdata)
         if not data:
             break
         #print(reply)
@@ -189,11 +188,12 @@ def clientthread(conn): #socket
                 if len(results) < 1024:
                     break
         # end LIST function
-        
+    
         #store function
         if 'store' in rdata:
             sfile = rdata[6: ] #find file name
-            printf("reading " + sfile)
+            print("reading " + sfile)
+            store(sfile, conn)
 
         # QUIT function
         if rdata[0:4] == 'QUIT' or rdata[0:4] == 'quit':
