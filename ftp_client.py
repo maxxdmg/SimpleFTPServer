@@ -13,27 +13,50 @@ import os
 from pathlib import Path
 
 
-def main(host, port):
-    # create TCP socket
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+def main():
+    # connection status
+    connected = False
+    
+    # create placeholder for socket
+    sock = None
 
-    # connect to server
-    try:
-        sock.connect((host, int(port)))
-    except:
-        print("Connection Error")
-        sys.exit()
 
     while True:
-        print("Enter your command: HELP to see options or QUIT to exit")
+        print("Enter your command: HELP to see options or EXIT to exit\n")
         cmd = input() #command to go to the server
-        readcmd(cmd, sock) #process commands
+        # Handle the special case of connecting to the server separately
+        if 'connect' in cmd and connected == False:
+            sock = connect_server(cmd)
+            if sock is not None:
+                connected = True
+        elif 'connect' in cmd and connected == True:
+            print("Must disconnect first\n")
+        else:
+            connected = readcmd(cmd, sock, connected) #process other commands
 
+def connect_server(cmd):
+    # retrieve host and port number from the command
+    host = cmd.split()[1]
+    port = cmd.split()[2]
+    
+    # create TCP socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    
+    # connect to the server
+    try:
+        sock.connect((host, int(port)))
+        print("Connected")
+        return sock
+    except:
+        print("Connection Error")
+        return None
+    
 def handle_quit(sock, cmd):
         sock.sendall(cmd.encode("UTF-8")) #send quit to server
         time.sleep(1) #added because close operation timing issues
         sock.close() #close socket
-        sys.exit() #exit 
+        print("Connection terminated\n")
+        #sys.exit() #exit 
 '''
 def handle_retrieve(sock, cmd):
     rfile = cmd[9:] #parse file name
@@ -139,33 +162,60 @@ def handle_retrieve(sock, cmd):
 def handle_help():
     print("QUIT: to quit\nRETRIEVE: to retrieve files\n")
 
-def readcmd(rcmd, sock):
+def readcmd(rcmd, sock, connected):
     cmd = rcmd.lower() #.upper()
 
-    # handle help
+    # handle help - connection independent
     if 'help' in cmd:
         handle_help()
-
-    # handle quit
-    if 'quit' in cmd:
-        handle_quit(sock, cmd)
     
-    # handle retrieve
-    if 'retrieve' in cmd:
-        handle_retrieve(sock, cmd)
+    # handle exit - must be disconnected
+    elif 'exit' in cmd:
+        if connected:
+            print("Must be disconnected\n")
+        else:
+            print("Exiting...")
+            exit()
+    
+    # handle quit - must be connected
+    elif 'quit' in cmd:
+        if not connected:
+            print("Must be connected\n")
+        else:
+            handle_quit(sock, cmd)
+            return False
+    
+    # handle retrieve - must be connected
+    elif 'retrieve' in cmd:
+        if not connected:
+            print("Must be connected\n")
+        else:
+            handle_retrieve(sock, cmd)
 
-    if 'store' in cmd:
-        handle_store(sock, cmd)
+    # handle store - must be connected
+    elif 'store' in cmd:
+        if not connected:
+            print("Must be connected\n")
+        else:
+            handle_store(sock, cmd)
 
-    # handle list
-    if 'list' in cmd:
-        sock.sendall(cmd.encode("UTF-8"))
-        data = sock.recv(1024)
-        print(data)
+    # handle list - must be connected
+    elif 'list' in cmd:
+        if not connected:
+            print("Must be connected\n")
+        else:
+            sock.sendall(cmd.encode("UTF-8"))
+            data = sock.recv(1024)
+            print(data)
 
-    return
+    else:
+        print("invalid command\n")
+        
+    return connected
 
 if __name__ == "__main__":
+    main()
+    '''
     if len(sys.argv) != 3:
         print("Usage: python3 ftp_client.py ip_address port")
         exit()
@@ -175,3 +225,4 @@ if __name__ == "__main__":
         port = sys.argv[2]
 
         main(host, port) # run main w/ supplied values
+    '''
