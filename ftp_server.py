@@ -199,7 +199,6 @@ def clientthread(conn, addr):
             results = os.popen('ls').read().encode() #socket sends bytes needs to be encoded
             while (results):
                 conn.send(results)  # send initial read
-                print(results.decode())  # confirm data print to screen
                 if len(results) < 1024:
                     break
         # end LIST function

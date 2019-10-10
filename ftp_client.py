@@ -15,9 +15,8 @@ from pathlib import Path
 
 def main():
     sock = -1 # socket initialized as no connection
-
+    print("Enter your command: HELP to see options or QUIT to exit")
     while True:
-        print("Enter your command: HELP to see options or QUIT to exit")
         cmd = input() #command to go to the server
         potential_socket = readcmd(cmd, sock) #read command and may return a socket
         if(potential_socket != 0):
@@ -31,8 +30,9 @@ def handle_connection(cmd):
         # connect to server
     try:
         sock.connect((host, int(port)))
+        print("Successfully connected")
     except:
-        print("Connection Error")
+        print("Connection Error, are you sure the server is running?")
         sys.exit()
 
     return sock
@@ -144,7 +144,7 @@ def handle_retrieve(sock, cmd):
 
 
 def handle_help():
-    print("QUIT: to quit\nRETRIEVE: to retrieve files\n")
+    print("CONNECT address port: to connect to server\nQUIT: to quit\nRETRIEVE: to retrieve files\nSTORE: to store files to server\nLIST: to list the files on server\n")
 
 def readcmd(rcmd, sock):
     cmd = rcmd.lower() #.upper()
@@ -196,7 +196,7 @@ def readcmd(rcmd, sock):
         else:
             sock.sendall(cmd.encode("UTF-8"))
             data = sock.recv(1024)
-            print(data)
+            print(data.decode())
         return 0
 
     return 0
