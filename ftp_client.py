@@ -13,21 +13,29 @@ import os
 from pathlib import Path
 
 
-def main(host, port):
-    # create TCP socket
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+def main():
+    sock = -1 # socket initialized as no connection
 
-    # connect to server
+    while True:
+        print("Enter your command: HELP to see options or QUIT to exit")
+        cmd = input() #command to go to the server
+        potential_socket = readcmd(cmd, sock) #read command and may return a socket
+        if(potential_socket != 0):
+            sock = potential_socket
+
+def handle_connection(cmd):
+    inputs = cmd.split() # splits command string into whitespace seperated text
+    host = inputs[1]
+    port = inputs[2]
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # init socket
+        # connect to server
     try:
         sock.connect((host, int(port)))
     except:
         print("Connection Error")
         sys.exit()
 
-    while True:
-        print("Enter your command: HELP to see options or QUIT to exit")
-        cmd = input() #command to go to the server
-        readcmd(cmd, sock) #process commands
+    return sock
 
 def handle_quit(sock, cmd):
         sock.sendall(cmd.encode("UTF-8")) #send quit to server
@@ -64,7 +72,6 @@ def handle_retrieve(sock, cmd):
 '''
 
 def handle_store(sock, cmd):
-
     sock.sendall(cmd.encode("UTF-8")) #send store to server
     file = cmd[6: ]
 
@@ -142,36 +149,57 @@ def handle_help():
 def readcmd(rcmd, sock):
     cmd = rcmd.lower() #.upper()
 
+    # handle connection
+    if 'connect' in cmd:
+        return handle_connection(cmd) # returns socket to main
+
     # handle help
     if 'help' in cmd:
         handle_help()
+        return 0
 
     # handle quit
     if 'quit' in cmd:
-        handle_quit(sock, cmd)
+        # check that socket has been initialized
+        if sock == -1:
+            print('Must connect to server before issuing commands')
+            print('Enter the help command for more details') 
+        else:
+            handle_quit(sock, cmd)
+        return 0
     
     # handle retrieve
     if 'retrieve' in cmd:
-        handle_retrieve(sock, cmd)
+        # check that socket has been initialized
+        if sock == -1:
+            print('Must connect to server before issuing commands')
+            print('Enter the help command for more details') 
+        else:
+            handle_retrieve(sock, cmd)
+        return 0
 
     if 'store' in cmd:
-        handle_store(sock, cmd)
+        # check that socket has been initialized
+        if sock == -1:
+            print('Must connect to server before issuing commands')
+            print('Enter the help command for more details') 
+        else:
+            handle_store(sock, cmd)
+        return 0
 
     # handle list
     if 'list' in cmd:
-        sock.sendall(cmd.encode("UTF-8"))
-        data = sock.recv(1024)
-        print(data)
+            # check that socket has been initialized
+        if sock == -1:
+            print('Must connect to server before issuing commands')
+            print('Enter the help command for more details') 
+        else:
+            sock.sendall(cmd.encode("UTF-8"))
+            data = sock.recv(1024)
+            print(data)
+        return 0
 
-    return
+    return 0
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: python3 ftp_client.py ip_address port")
-        exit()
-    else:
-    # get host and port from cmd line args
-        host = sys.argv[1]
-        port = sys.argv[2]
-
-        main(host, port) # run main w/ supplied values
+    main()

@@ -31,9 +31,24 @@ from _thread import *
 # intialize and run everything
 
 
-def main(host, port):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # create socket
-    print("Socket Created")  # Status update
+def main():
+    print("To begin listening, enter: CONNECT address port")
+    s = -1
+    host = -1
+    port = -1
+    while(1):
+        cmd = input()
+        inputs = cmd.split()
+        
+        if len(inputs) < 3 or inputs[0] != "CONNECT":
+            print("Incorrect input, enter: CONNECT address port")
+            continue
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # create socket
+        host = inputs[1]
+        port = inputs[2]
+        print("Socket Created")  # Status update
+        break
 
     # Attempt to bind socket to IP and port, error otherwise.
     try:
@@ -53,7 +68,7 @@ def main(host, port):
             # Print IP address and port# of connected client
             print("Connected with " + addr[0] + ":" + str(addr[1]))
             # Start new thread for client each connection
-            start_new_thread(clientthread, (conn, )) #,s
+            start_new_thread(clientthread, (conn, addr,)) #,s
         except socket.error:
             continue
         except KeyboardInterrupt:
@@ -161,7 +176,7 @@ def retrieve(file, conn):
 
 
 # Function to handle all client connections and their respective commands
-def clientthread(conn): #socket
+def clientthread(conn, addr):
     while True:
         #print(conn)
         data = conn.recv(1024)
@@ -180,7 +195,7 @@ def clientthread(conn): #socket
             retrieve(rfile, conn)
 
         # List function
-        if rdata[0:4] == 'LIST' or rdata[0:4] == 'list':
+        if 'list' in rdata:
             results = os.popen('ls').read().encode() #socket sends bytes needs to be encoded
             while (results):
                 conn.send(results)  # send initial read
@@ -196,21 +211,12 @@ def clientthread(conn): #socket
             store(sfile, conn)
 
         # QUIT function
-        if rdata[0:4] == 'QUIT' or rdata[0:4] == 'quit':
+        if 'quit' in rdata:
+            # print close mesaage
+            print("Connection with " + addr[0] + ":" + str(addr[1]) + " closed")
             conn.close()
             break
         # End RETRIEVE function
 
 
-        #conn.close() #
-
-
-if len(sys.argv) != 3:
-    print("Usage: python3 ftp_server.py ip_address port")
-    exit()
-else:
-    # get host and port from cmd line args
-    host = sys.argv[1]
-    port = sys.argv[2]
-
-    main(host, port) # run main w/ supplied values
+main()
