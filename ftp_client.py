@@ -152,6 +152,7 @@ def readcmd(rcmd, sock):
             print('Enter the help command for more details') 
         else:
             handle_quit(sock, cmd)
+            sock = -1
         return 0
     
     # handle retrieve
