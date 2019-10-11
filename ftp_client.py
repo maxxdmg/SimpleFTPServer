@@ -37,11 +37,13 @@ def handle_connection(cmd):
 
     return sock
 
+
 def handle_quit(sock, cmd):
         sock.sendall(cmd.encode("UTF-8")) #send quit to server
         time.sleep(1) #added because close operation timing issues
         sock.close() #close socket
-        sys.exit() #exit 
+        print("Connection terminated\n")
+        #sys.exit() #exit 
 '''
 def handle_retrieve(sock, cmd):
     rfile = cmd[9:] #parse file name
@@ -146,20 +148,31 @@ def handle_retrieve(sock, cmd):
 def handle_help():
     print("CONNECT address port: to connect to server\nQUIT: to quit\nRETRIEVE: to retrieve files\nSTORE: to store files to server\nLIST: to list the files on server\n")
 
-def readcmd(rcmd, sock):
+def readcmd(rcmd, sock, connected):
     cmd = rcmd.lower() #.upper()
-
+    
     # handle connection
     if 'connect' in cmd:
-        return handle_connection(cmd) # returns socket to main
+        if sock != -1:
+            print('Must be disconnected to connect to a server')
+        else:
+            return handle_connection(cmd) # returns socket to main
 
     # handle help
-    if 'help' in cmd:
+    elif 'help' in cmd:
         handle_help()
         return 0
-
+    
+    # handle exit
+    elif 'exit' in cmd:
+        if sock != -1:
+            print('Must be disconnected before exiting program')
+        else:
+            print('Exiting...')
+            exit()
+  
     # handle quit
-    if 'quit' in cmd:
+    elif 'quit' in cmd:
         # check that socket has been initialized
         if sock == -1:
             print('Must connect to server before issuing commands')
@@ -169,7 +182,7 @@ def readcmd(rcmd, sock):
         return 0
     
     # handle retrieve
-    if 'retrieve' in cmd:
+    elif 'retrieve' in cmd:
         # check that socket has been initialized
         if sock == -1:
             print('Must connect to server before issuing commands')
@@ -178,7 +191,7 @@ def readcmd(rcmd, sock):
             handle_retrieve(sock, cmd)
         return 0
 
-    if 'store' in cmd:
+    elif 'store' in cmd:
         # check that socket has been initialized
         if sock == -1:
             print('Must connect to server before issuing commands')
@@ -198,7 +211,10 @@ def readcmd(rcmd, sock):
             data = sock.recv(1024)
             print(data.decode())
         return 0
-
+    
+    else:
+        print("Invalid command")
+      
     return 0
 
 if __name__ == "__main__":
