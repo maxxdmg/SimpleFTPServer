@@ -29,39 +29,14 @@ def main(host, port):
         cmd = input() #command to go to the server
         readcmd(cmd, sock) #process commands
 
+
 def handle_quit(sock, cmd):
-        sock.sendall(cmd.encode("UTF-8")) #send quit to server
-        time.sleep(1) #added because close operation timing issues
-        sock.close() #close socket
-        sys.exit() #exit 
-'''
-def handle_retrieve(sock, cmd):
-    rfile = cmd[9:] #parse file name
-    sock.sendall(cmd.encode("UTF-8"))
-    try:
-        f = open(rfile, "w")
-    except:
-        print("error opening file")
-        return 0
+    sock.sendall(cmd.encode("UTF-8")) #send quit to server
+    time.sleep(1) #added because close operation timing issues
+    sock.close() #close socket
+    sys.exit() #exit
+    print("Connection terminated\n")
 
-    while True:
-        data = sock.recv(128)
-
-        # handle empty file
-        if data.decode() == "$nil$":
-            break
-
-        print(data)
-
-        f.write(data.decode())
-        f.flush()
-
-        #if less than 1024 nothing more to receive
-        if len(data) < 128:
-            break
-    f.close()
-    print('Successfully received the file')
-'''
 
 def handle_store(sock, cmd):
 
@@ -122,7 +97,7 @@ def handle_retrieve(sock, cmd):
     while True:
         data = sock.recv(chunk_size)
         if not data: break
-        print('data=%s', (data.decode()))
+        #print('data=%s', (data.decode()))
         f.write(data.decode())
         f.flush()
 
@@ -137,7 +112,7 @@ def handle_retrieve(sock, cmd):
 
 
 def handle_help():
-    print("QUIT: to quit\nRETRIEVE: to retrieve files\n")
+    print("quit: to quit\nretrieve: to retrieve files\nstore: to store file\nlist: to list files in server directory")
 
 def readcmd(rcmd, sock):
     cmd = rcmd.lower() #.upper()
@@ -160,8 +135,9 @@ def readcmd(rcmd, sock):
     # handle list
     if 'list' in cmd:
         sock.sendall(cmd.encode("UTF-8"))
-        data = sock.recv(1024)
-        print(data)
+        data = sock.recv(1024).decode()
+        print(data.split('\n'))
+
 
     return
 
