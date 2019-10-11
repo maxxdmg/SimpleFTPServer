@@ -181,7 +181,7 @@ def readcmd(rcmd, sock):
             print('Enter the help command for more details') 
         else:
             sock.sendall(cmd.encode("UTF-8"))
-            data = sock.recv(1024)
+            data = sock.recv(1024).strip()
             print(data.decode())
         return 0
     
