@@ -14,43 +14,30 @@ from pathlib import Path
 
 
 def main():
-    # connection status
-    connected = False
-    
-    # create placeholder for socket
-    sock = None
-
-
+    sock = -1 # socket initialized as no connection
+    print("Enter your command: HELP to see options or QUIT to exit")
     while True:
-        print("Enter your command: HELP to see options or EXIT to exit\n")
         cmd = input() #command to go to the server
-        # Handle the special case of connecting to the server separately
-        if 'connect' in cmd and connected == False:
-            sock = connect_server(cmd)
-            if sock is not None:
-                connected = True
-        elif 'connect' in cmd and connected == True:
-            print("Must disconnect first\n")
-        else:
-            connected = readcmd(cmd, sock, connected) #process other commands
+        potential_socket = readcmd(cmd, sock) #read command and may return a socket
+        if(potential_socket != 0):
+            sock = potential_socket
 
-def connect_server(cmd):
-    # retrieve host and port number from the command
-    host = cmd.split()[1]
-    port = cmd.split()[2]
-    
-    # create TCP socket
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    
-    # connect to the server
+def handle_connection(cmd):
+    inputs = cmd.split() # splits command string into whitespace seperated text
+    host = inputs[1]
+    port = inputs[2]
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # init socket
+        # connect to server
     try:
         sock.connect((host, int(port)))
-        print("Connected")
-        return sock
+        print("Successfully connected")
     except:
-        print("Connection Error")
-        return None
-    
+        print("Connection Error, are you sure the server is running?")
+        sys.exit()
+
+    return sock
+
+
 def handle_quit(sock, cmd):
         sock.sendall(cmd.encode("UTF-8")) #send quit to server
         time.sleep(1) #added because close operation timing issues
@@ -87,7 +74,6 @@ def handle_retrieve(sock, cmd):
 '''
 
 def handle_store(sock, cmd):
-
     sock.sendall(cmd.encode("UTF-8")) #send store to server
     file = cmd[6: ]
 
@@ -160,69 +146,76 @@ def handle_retrieve(sock, cmd):
 
 
 def handle_help():
-    print("QUIT: to quit\nRETRIEVE: to retrieve files\n")
+    print("CONNECT address port: to connect to server\nQUIT: to quit\nRETRIEVE: to retrieve files\nSTORE: to store files to server\nLIST: to list the files on server\n")
 
 def readcmd(rcmd, sock, connected):
     cmd = rcmd.lower() #.upper()
-
-    # handle help - connection independent
-    if 'help' in cmd:
-        handle_help()
     
-    # handle exit - must be disconnected
-    elif 'exit' in cmd:
-        if connected:
-            print("Must be disconnected\n")
+    # handle connection
+    if 'connect' in cmd:
+        if sock != -1:
+            print('Must be disconnected to connect to a server')
         else:
-            print("Exiting...")
-            exit()
+            return handle_connection(cmd) # returns socket to main
+
+    # handle help
+    elif 'help' in cmd:
+        handle_help()
+        return 0
     
-    # handle quit - must be connected
+    # handle exit
+    elif 'exit' in cmd:
+        if sock != -1:
+            print('Must be disconnected before exiting program')
+        else:
+            print('Exiting...')
+            exit()
+  
+    # handle quit
     elif 'quit' in cmd:
-        if not connected:
-            print("Must be connected\n")
+        # check that socket has been initialized
+        if sock == -1:
+            print('Must connect to server before issuing commands')
+            print('Enter the help command for more details') 
         else:
             handle_quit(sock, cmd)
-            return False
+        return 0
     
-    # handle retrieve - must be connected
+    # handle retrieve
     elif 'retrieve' in cmd:
-        if not connected:
-            print("Must be connected\n")
+        # check that socket has been initialized
+        if sock == -1:
+            print('Must connect to server before issuing commands')
+            print('Enter the help command for more details') 
         else:
             handle_retrieve(sock, cmd)
+        return 0
 
-    # handle store - must be connected
     elif 'store' in cmd:
-        if not connected:
-            print("Must be connected\n")
+        # check that socket has been initialized
+        if sock == -1:
+            print('Must connect to server before issuing commands')
+            print('Enter the help command for more details') 
         else:
             handle_store(sock, cmd)
+        return 0
 
-    # handle list - must be connected
-    elif 'list' in cmd:
-        if not connected:
-            print("Must be connected\n")
+    # handle list
+    if 'list' in cmd:
+            # check that socket has been initialized
+        if sock == -1:
+            print('Must connect to server before issuing commands')
+            print('Enter the help command for more details') 
         else:
             sock.sendall(cmd.encode("UTF-8"))
             data = sock.recv(1024)
-            print(data)
-
+            print(data.decode())
+        return 0
+    
     else:
-        print("invalid command\n")
-        
-    return connected
+        print("Invalid command")
+      
+    return 0
 
 if __name__ == "__main__":
     main()
-    '''
-    if len(sys.argv) != 3:
-        print("Usage: python3 ftp_client.py ip_address port")
-        exit()
-    else:
-    # get host and port from cmd line args
-        host = sys.argv[1]
-        port = sys.argv[2]
-
-        main(host, port) # run main w/ supplied values
-    '''
