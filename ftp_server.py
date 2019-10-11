@@ -32,7 +32,7 @@ from _thread import *
 
 
 def main():
-    print("To begin listening, enter: CONNECT address port")
+    print("To begin listening, enter: connect address port")
     s = -1
     host = -1
     port = -1
@@ -40,8 +40,8 @@ def main():
         cmd = input()
         inputs = cmd.split()
         
-        if len(inputs) < 3 or inputs[0] != "CONNECT":
-            print("Incorrect input, enter: CONNECT address port")
+        if len(inputs) < 3 or inputs[0] != "connect":
+            print("Incorrect input, enter: connect address port")
             continue
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # create socket
@@ -76,45 +76,14 @@ def main():
             break
     s.close()  # Close socket
 
-'''
-def retrieve(file, conn):
-    filesize = 0;
-    sizeread = 0;
 
-    f = open(file, 'rb')  # open file to read bytes
-    filesize = os.path.getsize(f.name)
-    print(os.listdir())
-
-    if int(filesize) == 0:
-        conn.send(b'$nil$');
-        f.close();
-        return;       
-    elif int(filesize) <= 1024:
-        s = f.read(filesize);
-        conn.send(s);
-        f.close();
-        print('Sent ' + file + '\n')  # confirm data print to screen
-        return;
-
-
-    while(sizeread < 1024):
-        s = f.read(1024)  # continue to read
-        sizeread += 1024;
-        conn.send(s)  # send initial read
-        print('Sending ' + file + '\n')  # confirm data print to screen
-        if filesize - sizeread < 1024:
-            conn.send(f.read(filesize - sizeread))
-            break;
-    f.close()  # close file after sending all
-    return 1
-'''
 def store(file, conn):
     chunk_size = 1024 #arbitrary chunk size but needs to be sufficient for data transfers
     rfile = file #parse file name
     filesize = conn.recv(16) #represents the size of file requested
     
     print('File size received is: ', filesize.decode())
-    f = open('copy of' + rfile, 'w') #Added to use file in same dir then run diff
+    f = open('copy of ' + rfile, 'w') #Added to use file in same dir then run diff
     
     if filesize <= bytes(chunk_size):
         data = conn.recv(chunk_size)
@@ -126,7 +95,6 @@ def store(file, conn):
     while True:
         data = conn.recv(chunk_size)
         if not data: break
-        #print('data=%s', (data.decode()))
         f.write(data.decode())
         f.flush()
         
@@ -183,10 +151,9 @@ def clientthread(conn, addr):
         reply = "ACK " + data.decode()
         rdata = data.decode()
         rdata = rdata.lower()
-        #print(rdata)
+        print(rdata)
         if not data:
             break
-        #print(reply)
 
         # Retrieve function
         if 'retrieve' in rdata:
@@ -216,6 +183,5 @@ def clientthread(conn, addr):
             conn.close()
             break
         # End RETRIEVE function
-
 
 main()

@@ -39,44 +39,17 @@ def handle_connection(cmd):
 
 
 def handle_quit(sock, cmd):
-        sock.sendall(cmd.encode("UTF-8")) #send quit to server
-        time.sleep(1) #added because close operation timing issues
-        sock.close() #close socket
-        print("Connection terminated\n")
-        #sys.exit() #exit 
-'''
-def handle_retrieve(sock, cmd):
-    rfile = cmd[9:] #parse file name
-    sock.sendall(cmd.encode("UTF-8"))
-    try:
-        f = open(rfile, "w")
-    except:
-        print("error opening file")
-        return 0
+    sock.sendall(cmd.encode("UTF-8")) #send quit to server
+    time.sleep(1) #added because close operation timing issues
+    sock.close() #close socket
+    print("Connection terminated\n")
 
-    while True:
-        data = sock.recv(128)
-
-        # handle empty file
-        if data.decode() == "$nil$":
-            break
-
-        print(data)
-
-        f.write(data.decode())
-        f.flush()
-
-        #if less than 1024 nothing more to receive
-        if len(data) < 128:
-            break
-    f.close()
-    print('Successfully received the file')
-'''
 
 def handle_store(sock, cmd):
+    
     sock.sendall(cmd.encode("UTF-8")) #send store to server
     file = cmd[6: ]
-
+    
     #Size of data to send
     chunk_size = 1024
     #try to open the file
@@ -85,7 +58,7 @@ def handle_store(sock, cmd):
     
     except:
         print("File Not Found")
-
+    
     #Get file size and send it to the server
     filesize = os.path.getsize(rfile.name)
     print('File size is: ', filesize)
@@ -131,7 +104,7 @@ def handle_retrieve(sock, cmd):
     while True:
         data = sock.recv(chunk_size)
         if not data: break
-        print('data=%s', (data.decode()))
+        #print('data=%s', (data.decode()))
         f.write(data.decode())
         f.flush()
 
@@ -144,11 +117,11 @@ def handle_retrieve(sock, cmd):
     print('Successfully received the file')
 
 
-
 def handle_help():
-    print("CONNECT address port: to connect to server\nQUIT: to quit\nRETRIEVE: to retrieve files\nSTORE: to store files to server\nLIST: to list the files on server\n")
+    print("connect address port: to connect to server\nquit: to quit\nretrieve: to retrieve files\nstore: to store files to server\nlist: to list the files on server\n")
 
-def readcmd(rcmd, sock, connected):
+
+def readcmd(rcmd, sock):
     cmd = rcmd.lower() #.upper()
     
     # handle connection
@@ -202,7 +175,7 @@ def readcmd(rcmd, sock, connected):
 
     # handle list
     if 'list' in cmd:
-            # check that socket has been initialized
+        # check that socket has been initialized
         if sock == -1:
             print('Must connect to server before issuing commands')
             print('Enter the help command for more details') 
