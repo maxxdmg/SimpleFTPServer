@@ -83,8 +83,11 @@ def store(file, conn):
     filesize = conn.recv(16) #represents the size of file requested
     
     print('File size received is: ', filesize.decode())
-    f = open('copy of ' + rfile, 'w') #Added to use file in same dir then run diff
-    
+    if (os.path.exists(rfile)):
+        f = open('copy of ' + rfile, 'w') #Added to use file in same dir then run diff
+    else:
+        f = open(rfile, 'w')
+
     if filesize <= bytes(chunk_size):
         data = conn.recv(chunk_size)
         f.write(data.decode())

@@ -55,9 +55,9 @@ def handle_store(sock, cmd):
     #try to open the file
     try:
         rfile = open(file, 'rb') #open file passed
-    
     except:
         print("File Not Found")
+        return
     
     #Get file size and send it to the server
     filesize = os.path.getsize(rfile.name)
@@ -152,7 +152,7 @@ def readcmd(rcmd, sock):
             print('Enter the help command for more details') 
         else:
             handle_quit(sock, cmd)
-            sock = -1
+            return -1
         return 0
     
     # handle retrieve
